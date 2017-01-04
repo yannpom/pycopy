@@ -578,8 +578,7 @@ STATIC void lwip_socket_print(const mp_print_t *print, mp_obj_t self_in, mp_prin
 }
 
 // FIXME: Only supports two arguments at present
-STATIC mp_obj_t lwip_socket_make_new(const mp_obj_type_t *type, mp_uint_t n_args,
-    mp_uint_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t lwip_socket_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 4, false);
 
     lwip_socket_obj_t *socket = m_new_obj_with_finaliser(lwip_socket_obj_t);
