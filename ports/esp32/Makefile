@@ -34,7 +34,7 @@ MICROPY_VFS_FAT = 1
 MICROPY_VFS_LFS2 = 1
 
 #FROZEN_DIR = scripts
-FROZEN_MPY_DIR = modules
+FROZEN_MPY_DIR ?= modules
 
 # include py core make definitions
 include $(TOP)/py/py.mk
