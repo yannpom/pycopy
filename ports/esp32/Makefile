@@ -48,6 +48,8 @@ FLASH_FREQ ?= 40m
 FLASH_SIZE ?= 4MB
 CROSS_COMPILE ?= xtensa-esp32-elf-
 OBJDUMP = $(CROSS_COMPILE)objdump
+RANLIB = $(CROSS_COMPILE)ranlib
+AR = $(CROSS_COMPILE)ar
 
 SDKCONFIG_COMBINED = $(BUILD)/sdkconfig.combined
 SDKCONFIG_H = $(BUILD)/sdkconfig.h
@@ -318,7 +320,7 @@ endif
 # List of MicroPython source and object files
 
 SRC_C = \
-	main.c \
+	esp32task.c \
 	uart.c \
 	gccollect.c \
 	mphalport.c \
@@ -742,6 +744,7 @@ erase:
 # Declarations to build the application
 
 OBJ = $(OBJ_MP)
+OBJ_APP = $(addprefix $(BUILD)/, main.o) $(OBJ)
 
 APP_LD_ARGS =
 APP_LD_ARGS += $(LDFLAGS_MOD)
@@ -759,9 +762,19 @@ APP_LD_ARGS += $(ESPCOMP)/esp32/libhal.a
 APP_LD_ARGS += -L$(ESPCOMP)/bt/lib -lbtdm_app
 APP_LD_ARGS += -L$(ESPCOMP)/esp32/lib -lcore -lmesh -lnet80211 -lphy -lrtc -lpp -lwpa -lsmartconfig -lcoexist -lwps -lwpa2
 endif
-APP_LD_ARGS += $(OBJ)
+APP_LD_ARGS += $(OBJ_APP)
 APP_LD_ARGS += $(LIB)
 APP_LD_ARGS += --end-group
+
+$(BUILD)/libupythonesp32.a: $(OBJ_ESPIDF)
+	$(AR) rcs $@ $(OBJ_ESPIDF)
+	$(RANLIB) $@
+
+$(BUILD)/libupython.a: $(OBJ_MP)
+	$(AR) rcs $@ $(OBJ_MP)
+	$(RANLIB) $@
+
+libs: $(BUILD)/libupython.a $(BUILD)/libupythonesp32.a
 
 $(BUILD)/esp32_out.ld: $(SDKCONFIG_H)
 	$(Q)$(CC) -I$(BUILD) -C -P -x c -E $(ESPCOMP)/esp32/ld/esp32.ld -o $@
@@ -770,7 +783,7 @@ $(BUILD)/application.bin: $(BUILD)/application.elf
 	$(ECHO) "Create $@"
 	$(Q)$(ESPTOOL) --chip esp32 elf2image --flash_mode $(FLASH_MODE) --flash_freq $(FLASH_FREQ) --flash_size $(FLASH_SIZE) $<
 
-$(BUILD)/application.elf: $(OBJ) $(LIB) $(BUILD)/esp32_out.ld $(BUILD)/esp32.project.ld
+$(BUILD)/application.elf: $(OBJ_APP) $(LIB) $(BUILD)/esp32_out.ld $(BUILD)/esp32.project.ld libs
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(APP_LD_ARGS)
 	$(Q)$(SIZE) $@
